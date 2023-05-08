@@ -1484,7 +1484,7 @@ cs_parameters_check(void)
   /* Turbulence */
 
   /* Model */
-  const int iturb_vals[18] = {CS_TURB_NONE,   /* laminar */
+  const int iturb_vals[19] = {CS_TURB_NONE,   /* laminar */
                               CS_TURB_MIXING_LENGTH,
                               CS_TURB_K_EPSILON,
                               CS_TURB_K_EPSILON_LIN_PROD,
@@ -1492,6 +1492,7 @@ cs_parameters_check(void)
                               CS_TURB_K_EPSILON_LS_CUBIC,
                               CS_TURB_K_EPSILON_QUAD,
                               CS_TURB_K_EPSILON_CUBIC,
+                              CS_TURB_K_EPSILON_STAR_CUBIC,
                               CS_TURB_RIJ_EPSILON_LRR,
                               CS_TURB_RIJ_EPSILON_SSG,
                               CS_TURB_RIJ_EPSILON_EBRSM,
@@ -1507,7 +1508,7 @@ cs_parameters_check(void)
                                _("while reading input data"),
                                "cs_glob_turb_model->iturb",
                                turb_model->iturb,
-                               18,
+                               19,
                                iturb_vals,
                                NULL);
 
@@ -1671,6 +1672,7 @@ cs_parameters_check(void)
         || turb_model->iturb == CS_TURB_K_EPSILON_LS_CUBIC
         || turb_model->iturb == CS_TURB_K_EPSILON_QUAD
         || turb_model->iturb == CS_TURB_K_EPSILON_CUBIC
+        || turb_model->iturb == CS_TURB_K_EPSILON_STAR_CUBIC
         || turb_model->itytur == 5) {
       cs_parameters_is_equal_int
         (CS_ABORT_DELAYED,
