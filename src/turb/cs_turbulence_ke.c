@@ -2735,19 +2735,20 @@ cs_turbulence_ke_c_mu_t(void)
     const cs_real_t xmu = viscl[c_id];
     const cs_real_t xdist = fmax(w_dist[c_id], 1.e-10);
 
-    const cs_real_t xmut = xrom*cs_math_pow2(xk)/xe;
+    //const cs_real_t xmut = xrom*cs_math_pow2(xk)/xe;
     const cs_real_t xrey = xdist*sqrt(xk)*xrom/xmu;
     const cs_real_t xttke = xk/xe;
     const cs_real_t xss = xttke*sqrt(2*s2[c_id]);
     const cs_real_t xww = xttke*sqrt(2*w2[c_id]);
 
-    const cs_real_t xfmu = 1.0 - exp(- 2.9e-2*sqrt(xrey)
-                                     - 1.1e-4*cs_math_pow2(xrey));
-    const cs_real_t xcmu = cs_turb_ca0/(cs_turb_ca1 
-                                        + xss*cs_turb_ca2 
-                                        + xww*cs_turb_ca3);
+    /*const cs_real_t xfmu = 1.0 - exp(- 2.9e-2*sqrt(xrey)
+                                     - 1.1e-4*cs_math_pow2(xrey));*/
+    const cs_real_t xcmu = cs_turb_star_ca0/(cs_turb_star_ca1 
+                                        + xss*cs_turb_star_ca2 
+                                        + xww*cs_turb_star_ca3);
 
-    visct[c_id] = xcmu*xfmu*xmut;
+    const cs_real_t xmut = xrom*xk*fmax(fmin(xttke,cs_turb_star_cT/xcmu/xss),cs_turb_star_ct*sqrt(viscl/xe/xrom));
+    visct[c_id] = xcmu*xmut;
     cmu[c_id] = xcmu;
   }
 
