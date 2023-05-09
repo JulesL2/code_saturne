@@ -1072,6 +1072,11 @@ do ifac = 1, nfabor
         else
           ! Use of wall functions
           if (iuntur.eq.1) then
+            call field_get_id_try("cmu", f_id_cmu)
+            if (f_id_cmu.ge.0) then
+              call field_get_val_s(f_id_cmu, cvar_cmu)
+              sqrcmu = sqrt(cvar_cmu(iel))
+            endif
             pimp = uk**2/sqrcmu
           else
             pimp = 0.d0

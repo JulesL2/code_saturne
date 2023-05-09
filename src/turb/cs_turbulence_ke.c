@@ -891,8 +891,8 @@ cs_turbulence_ke(cs_lnum_t        ncesmp,
                         - 4*xqc1*visct*xttke* (skskjsji - d1s3*sijsij*divu[c_id])
                         - 4*xqc2*visct*xttke* (wkskjsji + skiwjksji)
                         - 4*xqc3*visct*xttke* (wkwjksji - d1s3*wijwij*divu[c_id]);
-                        - 8*xqc4*visct*cs_math_pow2(xttke)* (skiwljsklsji + skjwlisklsji)
-                        - 8*xqc5*visct*cs_math_pow2(xttke)* (sklsklsijsji + wklwklsijsji);
+                      //  - 8*xqc4*visct*cs_math_pow2(xttke)* (skiwljsklsji + skjwlisklsji)
+                      //  - 8*xqc5*visct*cs_math_pow2(xttke)* (sklsklsijsji + wklwklsijsji);
           smbre[c_id] = smbrk[c_id] + yap_cor + add_term;
         }
       }
@@ -2735,20 +2735,20 @@ cs_turbulence_ke_c_mu_t(void)
     const cs_real_t xmu = viscl[c_id];
     const cs_real_t xdist = fmax(w_dist[c_id], 1.e-10);
 
-    //const cs_real_t xmut = xrom*cs_math_pow2(xk)/xe;
+    const cs_real_t xmut = xrom*cs_math_pow2(xk)/xe;
     const cs_real_t xrey = xdist*sqrt(xk)*xrom/xmu;
     const cs_real_t xttke = xk/xe;
     const cs_real_t xss = xttke*sqrt(2*s2[c_id]);
     const cs_real_t xww = xttke*sqrt(2*w2[c_id]);
 
-    /*const cs_real_t xfmu = 1.0 - exp(- 2.9e-2*sqrt(xrey)
-                                     - 1.1e-4*cs_math_pow2(xrey));*/
-    const cs_real_t xcmu = cs_turb_star_ca0/(cs_turb_star_ca1 
-                                        + xss*cs_turb_star_ca2 
-                                        + xww*cs_turb_star_ca3);
+    const cs_real_t xfmu = 1.0 - exp(- 2.9e-2*sqrt(xrey)
+                                     - 1.1e-4*cs_math_pow2(xrey));
+    const cs_real_t xcmu = cs_turb_star_ca0/(cs_turb_ca1 
+                                        + xss*cs_turb_ca2 
+                                        + xww*cs_turb_ca3);
 
-    const cs_real_t xmut = xrom*xk*fmax(fmin(xttke,cs_turb_star_cT/xcmu/xss),cs_turb_star_ct*sqrt(xmu/xe/xrom));
-    visct[c_id] = xcmu*xmut;
+    //const cs_real_t xmut = xrom*xk*fmax(fmin(xttke,cs_turb_star_cT/xcmu/xss),cs_turb_star_ct*sqrt(xmu/xe/xrom));
+    visct[c_id] = xcmu*xmut*xfmu;
     cmu[c_id] = xcmu;
   }
 
@@ -2876,9 +2876,9 @@ cs_turbulence_ke_c(cs_real_6_t  rij[])
       for (cs_lnum_t jj = 0; jj < 3; jj++) {
         xrij[ii][jj] = - 4*xqc1*xvisct*xttke*(sikskj[ii][jj] - d1s3*deltaij[ii][jj]*sijsij)
                        - 4*xqc2*xvisct*xttke*(wikskj[ii][jj] + skiwjk[ii][jj])
-                       - 4*xqc3*xvisct*xttke*(wikwjk[ii][jj] - d1s3*deltaij[ii][jj]*wijwij)
-                       - 8*xqc4*xvisct*cs_math_pow2(xttke)*(skiwljskl[ii][jj] + skjwliskl[ii][jj])
-                       - 8*xqc5*xvisct*cs_math_pow2(xttke)*(sklsklsij[ii][jj] - wklwklsij[ii][jj]);
+                       - 4*xqc3*xvisct*xttke*(wikwjk[ii][jj] - d1s3*deltaij[ii][jj]*wijwij);
+                      // - 8*xqc4*xvisct*cs_math_pow2(xttke)*(skiwljskl[ii][jj] + skjwliskl[ii][jj])
+                      // - 8*xqc5*xvisct*cs_math_pow2(xttke)*(sklsklsij[ii][jj] - wklwklsij[ii][jj]);
       }
     }
 
