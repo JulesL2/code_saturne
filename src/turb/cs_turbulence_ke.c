@@ -2747,7 +2747,7 @@ cs_turbulence_ke_c_mu_t(void)
                                         + xss*cs_turb_star_ca2 
                                         + xww*cs_turb_star_ca3);
 
-    const cs_real_t xmut = xrom*xk*fmax(fmin(xttke,cs_turb_star_cT/xcmu/xss),cs_turb_star_ct*sqrt(viscl/xe/xrom));
+    const cs_real_t xmut = xrom*xk*fmax(fmin(xttke,cs_turb_star_cT/xcmu/xss),cs_turb_star_ct*sqrt(xmu/xe/xrom));
     visct[c_id] = xcmu*xmut;
     cmu[c_id] = xcmu;
   }
