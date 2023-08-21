@@ -135,6 +135,7 @@ integer          nlogla, nsubla, iuiptn
 integer          f_id_rough, f_id_rough_t,f_id, iustar
 integer          f_id_uet, f_id_uk
 integer          f_id_tlag
+integer          f_id_cmu
 
 double precision rnx, rny, rnz
 double precision tx, ty, tz, txn, txn0, t2x, t2y, t2z
@@ -181,6 +182,7 @@ double precision, dimension(:), allocatable, target :: buet, bcfnns_loc
 double precision, dimension(:), pointer :: cvar_k, cvar_ep, bcfnns
 double precision, dimension(:,:), pointer :: cvar_rij
 double precision, dimension(:), pointer :: tlag
+double precision, dimension(:), pointer :: cvar_cmu
 
 double precision, dimension(:), pointer :: cvar_totwt, cvar_t, cpro_liqwt
 double precision, dimension(:,:), pointer :: coefau, cofafu, visten
@@ -384,7 +386,8 @@ else
   coefbf_ep => null()
 endif
 
-if (itytur.eq.3) then! Also have boundary conditions for the momentum equation
+! Also have boundary conditions for the momentum equation
+if (itytur.eq.3.or.iturb.eq.24.or.iturb.eq.25) then
   call field_get_coefa_v(ivarfl(irij), coefa_rij)
   call field_get_coefb_v(ivarfl(irij), coefb_rij)
   call field_get_coefaf_v(ivarfl(irij), coefaf_rij)
@@ -488,6 +491,10 @@ endif
 if (itytur.eq.3) then
   call field_get_key_struct_var_cal_opt(ivarfl(irij), vcopt_rij)
   call field_get_key_struct_var_cal_opt(ivarfl(iep), vcopt_ep)
+  call field_get_val_v(ivarfl(irij), cvar_rij)
+endif
+if (iturb.eq.24.or.iturb.eq.25) then
+  call field_get_key_struct_var_cal_opt(ivarfl(irij), vcopt_rij)
   call field_get_val_v(ivarfl(irij), cvar_rij)
 endif
 
@@ -648,7 +655,7 @@ do ifac = 1, nfabor
 
     ! Complete if necessary for Rij-Epsilon
 
-    if (itytur.eq.3) then
+    if (itytur.eq.3.or.iturb.eq.24.or.iturb.eq.25) then
 
       ! --> T2 = RN X T (where X is the cross product)
 
@@ -1142,10 +1149,96 @@ do ifac = 1, nfabor
                pimp         , hint          , rinfin )
         endif
 
-      ! ===================================
-      ! Quadratic Baglietto k-epsilon model
-      ! ===================================
-      else if(iturb.eq.23) then
+      ! ==========================================================
+      ! Low Reynolds Cubic and quadratic Baglietto k-epsilon model
+      ! ==========================================================
+      else if(iturb.eq.23.or.iturb.eq.25) then
+        call field_get_id_try("cmu", f_id_cmu)
+        if (f_id_cmu.ge.0) then
+          call field_get_val_s(f_id_cmu, cvar_cmu)
+          sqrcmu = sqrt(cvar_cmu(iel))
+        endif
+        ! Dirichlet Boundary Condition on k
+        !----------------------------------
+        if (iwallf.eq.0) then
+          ! No wall functions forces by user
+          pimp = 0.d0
+        else
+          ! Use of wall functions
+          if (iuntur.eq.1) then
+            pimp = uk**2/sqrcmu
+          else
+            pimp = 0.d0
+          endif
+        endif
+
+        hint = (visclc+visctc/sigmak)/distbf
+        pimp = pimp * cfnnk
+        call set_dirichlet_scalar &
+             !====================
+           ( coefa_k(ifac), coefaf_k(ifac),             &
+             coefb_k(ifac), coefbf_k(ifac),             &
+             pimp         , hint          , rinfin )
+
+        ! Dirichlet Boundary Condition on epsilon
+        !---------------------------------------
+        if(iwallf.ne.0) then
+
+          pimp_lam = 2.0d0*visclc/romc*cvar_k(iel)/distbf**2
+
+          if (yplus.gt.epzero) then
+            pimp_turb = 5.d0*uk**4*romc/        &
+                        (xkappa*visclc*yplus)
+
+            ! Blending between wall and homogeneous layer
+            fep       = exp(-((yplus+dplus)/4.d0)**1.5d0)
+            dep       = 1.d0- exp(-((yplus+dplus)/9.d0)**2.1d0)
+            pimp      = fep*pimp_lam + (1.d0-fep)*dep*pimp_turb
+          else
+            pimp = pimp_lam
+          end if
+
+        else
+
+          pimp = 2.0d0*visclc/romc*cvar_k(iel)/distbf**2
+        end if
+        pimp = pimp * cfnne
+        call set_dirichlet_scalar &
+             !====================
+           ( coefa_ep(ifac), coefaf_ep(ifac),             &
+             coefb_ep(ifac), coefbf_ep(ifac),             &
+             pimp          , hint           , rinfin )
+
+        !if defined set Dirichlet condition for the Lagrangian time scale
+        if (f_id_tlag.ge.0) then
+          if (iwallf.eq.0) then
+            ! No wall functions forced by user
+            pimp = 0.d0
+          else
+            ! Use of wall functions
+            if (iuntur.eq.1) then
+              pimp = cfnnk / (cfnne * uk) * cl / sqrcmu * xkappa  &
+                   * (dplus * visclc / (romc * uk) + rough_d )
+            else
+              pimp = 0.d0
+            endif
+          endif
+
+          call set_dirichlet_scalar &
+                 !====================
+             ( coefa_tlag(ifac), coefaf_tlag(ifac),             &
+               coefb_tlag(ifac), coefbf_tlag(ifac),             &
+               pimp         , hint          , rinfin )
+        endif
+      ! =============================================
+      ! Cubic Baglietto k-epsilon model high Reynolds
+      ! =============================================
+      else if(iturb.eq.24) then
+        call field_get_id_try("cmu", f_id_cmu)
+        if (f_id_cmu.ge.0) then
+          call field_get_val_s(f_id_cmu, cvar_cmu)
+          sqrcmu = sqrt(cvar_cmu(iel))
+        endif
 
         ! Dirichlet Boundary Condition on k
         !----------------------------------
@@ -1219,7 +1312,6 @@ do ifac = 1, nfabor
                coefb_tlag(ifac), coefbf_tlag(ifac),             &
                pimp         , hint          , rinfin )
         endif
-
       ! ==============================================
       ! k-epsilon and k-epsilon LP boundary conditions
       ! ==============================================
@@ -1287,12 +1379,95 @@ do ifac = 1, nfabor
         endif
       end if
 
+    endif
+
+    if (iturb.eq.24.or.iturb.eq.25) then
+      hint = (visclc+visctc/cmu)/distbf
+
+      do isou = 1, 6
+        fcoefa(isou) = 0.0d0
+        fcoefb(isou) = 0.0d0
+        fcofad(isou) = 0.0d0
+        fcofbd(isou) = 0.0d0
+      enddo
+
+      ! blending factor so that the component R(n,tau) have only
+      ! -mu_T/(mu+mu_T)*uet*uk
+      bldr12 = visctc/(visclc + visctc)
+
+      do isou = 1, 6
+
+        if (isou.eq.1) then
+          jj = 1
+          kk = 1
+        else if (isou.eq.2) then
+          jj = 2
+          kk = 2
+        else if (isou.eq.3) then
+          jj = 3
+          kk = 3
+        else if (isou.eq.4) then
+          jj = 1
+          kk = 2
+        else if (isou.eq.5) then
+          jj = 2
+          kk = 3
+        else if (isou.eq.6) then
+          jj = 1
+          kk = 3
+        endif
+
+        ! High Re + wall functions
+        if (iturb.eq.24) then
+          !partial implicitation
+          do ii = 1, 6
+            if (ii.ne.isou) then
+              fcoefa(isou) = fcoefa(isou) + alpha(isou,ii) * rijipb(ifac,ii)
+            endif
+          enddo
+          fcoefb(isou) = alpha(isou,isou)
+
+          ! Boundary conditions for the momentum equation
+          fcofad(isou) = fcoefa(isou)
+          fcofbd(isou) = fcoefb(isou)
+
+          fcoefa(isou) = fcoefa(isou)                                   &
+                        - (  eloglo(jj,1)*eloglo(kk,2)                 &
+                            + eloglo(jj,2)*eloglo(kk,1))*bldr12*uet*uk*cfnnk
+
+        ! else iturb equals 25
+        ! Low Re model => Zero stresses near the wall
+        else
+            fcoefa(isou) = 0.d0
+            fcofad(isou) = 0.d0
+            fcoefb(isou) = 0.d0
+            fcofbd(isou) = 0.d0
+        endif
+
+        ! Translate into Diffusive flux BCs
+        fcofaf(isou) = -hint*fcoefa(isou)
+        fcofbf(isou) = hint*(1.d0-fcoefb(isou))
+      enddo
+
+      do isou = 1, 6
+        coefa_rij(isou,ifac) = fcoefa(isou)
+        coefaf_rij(isou,ifac) = fcofaf(isou)
+        coefad_rij(isou,ifac) = fcofad(isou)
+        do ii = 1,6
+          coefb_rij(isou,ii,ifac) = 0
+          coefbf_rij(isou,ii,ifac) = 0
+          coefbd_rij(isou,ii,ifac) = 0
+        enddo
+        coefb_rij(isou,isou,ifac) = fcoefb(isou)
+        coefbf_rij(isou,isou,ifac) = fcofbf(isou)
+        coefbd_rij(isou,isou,ifac) = fcofbd(isou)
+      enddo
+    endif
     !===========================================================================
     ! 5. Boundary conditions on Rij-epsilon
     !===========================================================================
 
-    elseif (itytur.eq.3) then
-
+    if (itytur.eq.3) then
       ! Exchange coefficient
 
       ! Symmetric tensor diffusivity (Daly Harlow -- GGDH)
@@ -2064,11 +2239,13 @@ if (vcopt_u%iwarni.ge.0) then
     if (iturb.eq. 0) write(nfecra,2020)  ntlast,ypluli
     if (itytur.eq.5) write(nfecra,2030)  ntlast,ypluli
     ! No warnings in EBRSM
-    if ((itytur.eq.2.and.iturb.ne.22).or.iturb.eq.30.or.iturb.eq.31)   &
+    if ((itytur.eq.2.and.iturb.ne.22.and.iturb.ne.23.and.iturb.ne.25).or. &
+        iturb.eq.30.or.iturb.eq.31)   &
       write(nfecra,2040)  ntlast,ypluli
-    if (vcopt_u%iwarni.lt.2.and.(iturb.ne.32.and.iturb.ne.22)) then
+    if (vcopt_u%iwarni.lt.2.and.(iturb.ne.32.and.iturb.ne.22.and.iturb.ne. &
+        23.and.iturb.ne.25)) then
       write(nfecra,2050)
-    elseif (iturb.ne.32.and.iturb.ne.22) then
+    elseif (iturb.ne.32.and.iturb.ne.22.and.iturb.ne.23.and.iturb.ne.25) then
       write(nfecra,2060)
     endif
 

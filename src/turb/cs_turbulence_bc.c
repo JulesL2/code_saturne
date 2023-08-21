@@ -327,6 +327,31 @@ _inlet_bc(cs_lnum_t   face_id,
 
     _turb_bc_id.bc_k->rcodcl1[face_id] = k;
     _turb_bc_id.bc_eps->rcodcl1[face_id] = eps;
+    if (   turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_HR
+        || turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_LR){
+      double d2s3 = 2./3.;
+
+      for (int ii = 0; ii < 3; ii++)
+        _turb_bc_id.bc_rij->rcodcl1[ii*n_b_faces + face_id] = d2s3 * k;
+      if (vel_dir != NULL) {
+        cs_math_3_normalize(vel_dir, vel_dir);
+        /* Note: do not normalize shear_dir because it contains the
+          level of anisotropy */
+        /* Rxy */
+        _turb_bc_id.bc_rij->rcodcl1[3*n_b_faces + face_id]
+          = k * (vel_dir[0]*shear_dir[1] + vel_dir[1]*shear_dir[0]);
+        /* Ryz */
+        _turb_bc_id.bc_rij->rcodcl1[4*n_b_faces + face_id]
+          = k * (vel_dir[1]*shear_dir[2] + vel_dir[2]*shear_dir[1]);
+        /* Rxz */
+        _turb_bc_id.bc_rij->rcodcl1[5*n_b_faces + face_id]
+          =  k * (vel_dir[0]*shear_dir[2] + vel_dir[2]*shear_dir[0]);
+      }
+      else {
+        for (int ii = 3; ii < 6; ii++)
+          _turb_bc_id.bc_rij->rcodcl1[ii*n_b_faces + face_id] = 0.;
+      }
+    }
 
   }
 
@@ -439,6 +464,12 @@ _set_uninit_inlet_bc(cs_lnum_t   face_id,
     if (_turb_bc_id.bc_eps->rcodcl1[face_id] > 0.5*cs_math_infinite_r)
       _turb_bc_id.bc_eps->rcodcl1[face_id] = eps;
 
+    if (   turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_HR
+        || turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_LR){
+      for (int ii = 0; ii < 6; ii++){
+        _turb_bc_id.bc_rij->rcodcl1[ii*n_b_faces + face_id] = 0.;
+      }
+    }
   }
 
   else if (turb_model->order == CS_TURB_SECOND_ORDER) {

@@ -186,7 +186,7 @@ endif
 !       for LES: 2nd order; 1st order otherwise
 !       (2nd order forbidden for "coupled" k-epsilon)
 if (ischtp.eq.-1) then
-  if ((itytur.eq.4).or.(hybrid_turb.eq.4)) then
+  if ((itytur.eq.4).or.(hybrid_turb.eq.4).or.(hybrid_turb.eq.5)) then
     ischtp = 2
   else
     ischtp = 1
@@ -229,8 +229,12 @@ if (isto2t.eq.-999) then
     isto2t = 0
   else if (ischtp.eq.2) then
     !       Pour le moment par defaut on ne prend pas l'ordre 2
-    !              ISTO2T = 1
-    isto2t = 0
+    !       ISTO2T = 1 excepte pour STRUCT-epsilon
+    if (hybrid_turb.eq.5) then
+      isto2t = 1
+    else
+      isto2t = 0
+    endif
   endif
 else if (itytur.eq.2.or.iturb.eq.50.or.iturb.ne.60) then
   write(nfecra,8132) iturb,isto2t
@@ -278,7 +282,7 @@ if (ischtp.eq. 2.and.idtvar.ne.0) then
   write(nfecra,8111) ischtp,idtvar
   iok = iok + 1
 endif
-if (ischtp.eq. 2.and.itytur.eq.2) then
+if (ischtp.eq. 2.and.itytur.eq.2.and.hybrid_turb.ne.5) then
   write(nfecra,8112) ischtp,iturb
   iok = iok + 1
 endif

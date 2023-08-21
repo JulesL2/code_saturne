@@ -147,6 +147,20 @@ endif
 !-----------
 
 if (itytur.eq.2) then
+  if (iturb.eq.24.or.iturb.eq.25) then 
+    nfld = nfld + 1
+    ifvar(nfld) = irij
+    nfld = nfld + 1
+    ifvar(nfld) = irij + 1
+    nfld = nfld + 1
+    ifvar(nfld) = irij + 2
+    nfld = nfld + 1
+    ifvar(nfld) = irij + 3
+    nfld = nfld + 1
+    ifvar(nfld) = irij + 4
+    nfld = nfld + 1
+    ifvar(nfld) = irij + 5
+  endif
   nfld = nfld + 1
   ifvar(nfld) = ik
   nfld = nfld + 1
@@ -199,10 +213,10 @@ endif
 if (ipass .eq. 1) then
   do ii = 1, nfld
     ivar = ifvar(ii)
-    if (itytur.eq.3 ) then
-      if (ivar.eq.irij) then
+    if (itytur.eq.3.or.iturb.eq.24.or.iturb.eq.25) then
+      if (ivar.ge.irij.and.ivar.le.ir13) then
         call field_allocate_bc_coeffs(ivarfl(ivar), .true., .true., .false., .false.)
-      else if (ivar.gt.ir13) then
+      else
         call field_allocate_bc_coeffs(ivarfl(ivar), .true., .false., .false., .false.)
       endif
     else
@@ -302,7 +316,7 @@ if (ipass .eq. 1) then
       endif
       call field_init_bc_coeffs(ivarfl(ivar))
       ! Boundary conditions of the turbulent fluxes T'u'
-      if (turb_flux_model_type.eq.3) then
+      if (turb_flux_model_type.eq.3.or.turb_flux_model.eq.24.or.turb_flux_model.eq.25) then
         call field_get_name(ivarfl(ivar), fname)
         ! Index of the corresponding turbulent flux
         call field_get_id(trim(fname)//'_turbulent_flux', f_id)

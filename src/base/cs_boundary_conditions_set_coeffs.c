@@ -911,7 +911,10 @@ cs_boundary_conditions_set_coeffs(int        nvar,
   /* Compute rij in i' for boundary cells */
 
   cs_real_6_t *rijipb = NULL;
-  if ((iclsym != 0 || ipatur != 0 || ipatrg != 0) && itytur == 3) {
+  if (   (iclsym != 0 || ipatur != 0 || ipatrg != 0) 
+      && (   itytur == 3 
+          || iturb == CS_TURB_K_EPSILON_CUBIC_HR
+          || iturb == CS_TURB_K_EPSILON_CUBIC_LR)) {
 
     /* Allocate a work array to store rij values at boundary faces */
     BFT_MALLOC(rijipb, n_b_faces, cs_real_6_t);
@@ -1655,7 +1658,9 @@ cs_boundary_conditions_set_coeffs(int        nvar,
 
     /* Rij-epsilon */
 
-    else if (itytur == 3) {
+    if (   itytur == 3
+        || iturb == CS_TURB_K_EPSILON_CUBIC_HR
+        || iturb == CS_TURB_K_EPSILON_CUBIC_LR) {
 
       cs_field_t *rij = CS_F_(rij);
 

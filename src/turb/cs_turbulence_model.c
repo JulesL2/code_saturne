@@ -98,6 +98,7 @@ BEGIN_C_DECLS
         - CS_TURB_K_EPSILON_LS: Launder-Sharma \f$ k-\varepsilon \f$ model
         - CS_TURB_K_EPSILON_QUAD: Baglietto et al. quadratic
                                    \f$ k-\varepsilon \f$ model
+        - CS_TURB_K_EPSILON_CUBIC_HR: NLEVM cubic model by Baglietto
         - CS_TURB_RIJ_EPSILON_LRR: \f$ R_{ij}-\epsilon \f$ (LRR)
         - CS_TURB_RIJ_EPSILON_SSG: \f$ R_{ij}-\epsilon \f$ (SSG)
         - CS_TURB_RIJ_EPSILON_EBRSM: \f$ R_{ij}-\epsilon \f$ (EBRSM)
@@ -980,13 +981,34 @@ double cs_turb_cv2fet = 110.0;
 
 /*!
  * Constants for the Baglietto et al. quadratic k-epsilon model.
- * Useful if and only if \ref iturb = CS_TURB_K_EPSILON_QUAD
+ * Useful if and only if \ref iturb = CS_TURB_K_EPSILON_QUAD 
+ * or \ref iturb = CS_TURB_K_EPSILON_CUBIC_HR
+ * or \ref iturb = CS_TURB_K_EPSILON_CUBIC_LR
  */
 double cs_turb_cnl1 = 0.8;
 double cs_turb_cnl2 = 11.;
 double cs_turb_cnl3 = 4.5;
 double cs_turb_cnl6 = 1e3;
 double cs_turb_cnl7 = 1.;
+
+/*!
+ * Constants for the Baglietto cubic k-epsilon model.
+ * Useful if and only if \ref iturb = CS_TURB_K_EPSILON_CUBIC_HR
+ * or \ref iturb = CS_TURB_K_EPSILON_CUBIC_LR
+ */
+double cs_turb_cnl4 = -5.;
+double cs_turb_cnl5 = -4.5;
+double cs_turb_cnl8 = 15.;
+double cs_turb_cnl9 = 8.;
+double cs_turb_ca0 = 0.667;
+double cs_turb_ca1 = 3.9;
+double cs_turb_ca2 = 1.;
+double cs_turb_ca3 = 0.;
+
+/*!
+ * Constant of the STRUCT-epsilon model
+ */
+double cs_turb_ceps3 = 1.5;
 
 /*!
  * Constant of the WALE LES method.
@@ -1329,6 +1351,12 @@ _turbulence_model_enum_name(cs_turb_model_type_t  id)
   case CS_TURB_K_EPSILON_QUAD:
     s = "CS_TURB_K_EPSILON_QUAD";
     break;
+  case CS_TURB_K_EPSILON_CUBIC_HR:
+    s = "CS_TURB_K_EPSILON_CUBIC_HR";
+    break;
+  case CS_TURB_K_EPSILON_CUBIC_LR:
+    s = "CS_TURB_K_EPSILON_CUBIC_LR";
+    break;
   case CS_TURB_RIJ_EPSILON_LRR:
     s = "CS_TURB_RIJ_EPSILON_LRR";
     break;
@@ -1399,6 +1427,12 @@ _turbulence_model_name(cs_turb_model_type_t  id)
     break;
   case CS_TURB_K_EPSILON_QUAD:
     s = _("Baglietto et al. quadratic k-epsilon model");
+    break;
+  case CS_TURB_K_EPSILON_CUBIC_HR:
+    s = _("Baglietto NLEVM Cubic k-epsilon model");
+    break;
+  case CS_TURB_K_EPSILON_CUBIC_LR:
+    s = _("Low Reynolds k-epsilon model cubic baglietto");
     break;
   case CS_TURB_RIJ_EPSILON_LRR:
     s = _("Rij-epsilon (LRR) model");
@@ -1476,6 +1510,8 @@ cs_set_type_order_turbulence_model(void)
            || _turb_model.iturb == CS_TURB_K_EPSILON_LIN_PROD
            || _turb_model.iturb == CS_TURB_K_EPSILON_LS
            || _turb_model.iturb == CS_TURB_K_EPSILON_QUAD
+           || _turb_model.iturb == CS_TURB_K_EPSILON_CUBIC_HR
+           || _turb_model.iturb == CS_TURB_K_EPSILON_CUBIC_LR
            || _turb_model.iturb == CS_TURB_V2F_PHI
            || _turb_model.iturb == CS_TURB_V2F_BL_V2K
            || _turb_model.iturb == CS_TURB_K_OMEGA
@@ -1553,8 +1589,15 @@ cs_turb_compute_constants(void)
 
   cs_field_pointer_ensure_init();
 
-  if (CS_F_(k) != NULL)
-    cs_field_set_key_double(CS_F_(k), k_turb_schmidt, 1.);
+  if (CS_F_(k) != NULL) {
+    if (   cs_glob_turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_HR
+        || cs_glob_turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_LR) {
+      cs_field_set_key_double(CS_F_(k), k_turb_schmidt, 1.22);
+    }
+    else {
+      cs_field_set_key_double(CS_F_(k), k_turb_schmidt, 1.);
+    }
+  }
 
   if (CS_F_(phi) != NULL)
     cs_field_set_key_double(CS_F_(phi), k_turb_schmidt, 1.);
@@ -1568,6 +1611,10 @@ cs_turb_compute_constants(void)
   }
   else if (cs_glob_turb_model->iturb == CS_TURB_V2F_BL_V2K)
     cs_field_set_key_double(CS_F_(eps), k_turb_schmidt, 1.5);
+  else if (   cs_glob_turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_HR
+           || cs_glob_turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_LR) {
+    cs_field_set_key_double(CS_F_(eps), k_turb_schmidt, 1.);
+  }
   else
     cs_field_set_key_double(CS_F_(eps), k_turb_schmidt, 1.30);
 
@@ -1778,7 +1825,9 @@ cs_turb_model_log_setup(void)
   else if (   turb_model->iturb == CS_TURB_K_EPSILON
            || turb_model->iturb == CS_TURB_K_EPSILON_LIN_PROD
            || turb_model->iturb == CS_TURB_K_EPSILON_LS
-           || turb_model->iturb == CS_TURB_K_EPSILON_QUAD) {
+           || turb_model->iturb == CS_TURB_K_EPSILON_QUAD
+           || turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_HR
+           || turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_LR) {
 
     cs_log_printf
       (CS_LOG_SETUP,
@@ -1911,7 +1960,8 @@ cs_turb_model_log_setup(void)
          N_("CS_HYBRID_DES (RANS-LES hybrid model)"),
          N_("CS_HYBRID_DDES  (RANS-LES hybrid model)"),
          N_("CS_HYBRID_SAS (Scale Adpative Model)"),
-         N_("CS_HYBRID_HTLES (Hybrid Temporal LES)")};
+         N_("CS_HYBRID_HTLES (Hybrid Temporal LES)"),
+         N_("CS_HYBRID_STRUCT (STRUCT-Epsilon model)")};
 
     cs_log_printf(CS_LOG_SETUP,
        _("    uref:        %14.5e (Characteristic velocity)\n"
@@ -1951,7 +2001,8 @@ cs_turb_model_log_setup(void)
          N_("CS_HYBRID_DES (RANS-LES hybrid model)"),
          N_("CS_HYBRID_DDES  (RANS-LES hybrid model)"),
          N_("CS_HYBRID_SAS (Scale Adpative Model)"),
-         N_("CS_HYBRID_HTLES (Hybrid Temporal LES)")};
+         N_("CS_HYBRID_HTLES (Hybrid Temporal LES)"),
+         N_("CS_HYBRID_STRUCT (STRUCT-Epsilon model)")};
 
     cs_log_printf(CS_LOG_SETUP,
        _("    uref:        %14.5e (Characteristic velocity)\n"
@@ -2033,7 +2084,9 @@ cs_turb_constants_log_setup(void)
   if (   turb_model->iturb == CS_TURB_K_EPSILON
       || turb_model->iturb == CS_TURB_K_EPSILON_LIN_PROD
       || turb_model->iturb == CS_TURB_K_EPSILON_LS
-      || turb_model->iturb == CS_TURB_K_EPSILON_QUAD)
+      || turb_model->iturb == CS_TURB_K_EPSILON_QUAD
+      || turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_HR
+      || turb_model->iturb == CS_TURB_K_EPSILON_CUBIC_LR)
     cs_log_printf
       (CS_LOG_SETUP,
        _("    ce1:         %14.5e (Cepsilon 1: production coef.)\n"

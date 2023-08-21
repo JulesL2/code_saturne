@@ -138,7 +138,7 @@ call field_get_coefb_v(ivarfl(iu), coefbu)
 call field_get_coefaf_v(ivarfl(iu), cofafu)
 call field_get_coefbf_v(ivarfl(iu), cofbfu)
 
-if (itytur.eq.3) then
+if (itytur.eq.3.or.iturb.eq.24.or.iturb.eq.25) then
   call field_get_key_struct_var_cal_opt(ivarfl(irij), vcopt_rij)
   call field_get_coefa_v(ivarfl(irij), coefa_rij)
   call field_get_coefb_v(ivarfl(irij), coefb_rij)
@@ -188,7 +188,7 @@ do ifac = 1, nfabor
     upy = velipb(2,ifac)
     upz = velipb(3,ifac)
 
-    if (itytur.eq.3) then
+    if (itytur.eq.3.or.iturb.eq.24.or.iturb.eq.25) then
 
       ! Relative tangential velocity
 
@@ -309,10 +309,11 @@ do ifac = 1, nfabor
     ! 3. Boundary conditions on Rij (partially implicited)
     !===========================================================================
 
-    if (itytur.eq.3) then
+    if (itytur.eq.3.or.iturb.eq.24.or.iturb.eq.25) then
 
       ! Symmetric tensor diffusivity (Daly Harlow -- GGDH)
-      if (iand(vcopt_rij%idften, ANISOTROPIC_RIGHT_DIFFUSION).ne.0) then
+      if (iand(vcopt_rij%idften, ANISOTROPIC_RIGHT_DIFFUSION).ne.0.and.   &
+          itytur.ne.2) then
 
         visci(1,1) = visclc + visten(1,iel)
         visci(2,2) = visclc + visten(2,iel)
@@ -400,7 +401,7 @@ do ifac = 1, nfabor
             coefbd_rij(isou,ii, ifac) = coefb_rij(isou,ii, ifac)
           enddo
 
-        else if (iclsyr.eq.1) then
+        else if (iclsyr.eq.1.or.itytur.eq.2) then
           do ii = 1, 6
             if (ii.ne.isou) then
               fcoefa(isou) = fcoefa(isou) + alpha(isou,ii) * rijipb(ii,ifac)
@@ -423,7 +424,7 @@ do ifac = 1, nfabor
         fcofbf(isou) = hint*(1.d0-fcoefb(isou))
       enddo
 
-      if (irijco.ne.1) then
+      if (irijco.ne.1.or.itytur.eq.2) then
         do isou = 1, 6
           coefa_rij(isou,ifac) = fcoefa(isou)
           coefaf_rij(isou,ifac) = fcofaf(isou)

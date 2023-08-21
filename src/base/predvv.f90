@@ -370,7 +370,7 @@ if (iappel.eq.2) then
      .and. (itytur.eq.2 .or. itytur.eq.5 .or. iturb.eq.60) .and. igrhok.eq.1) then
     call field_get_val_s(ivarfl(ik), cvara_k)
   endif
-  if (itytur.eq.3.and.iterns.eq.1) then
+  if ((itytur.eq.3.or.iturb.eq.24.or.iturb.eq.25).and.iterns.eq.1) then
     call field_get_val_v(ivarfl(irij), cvara_rij)
   endif
 else
@@ -382,6 +382,9 @@ else
       call field_get_val_prev_s(ivarfl(ik), cvara_k)
   endif
   if (itytur.eq.3.and.iterns.eq.1) then
+    call field_get_val_v(ivarfl(irij), cvara_rij)
+  endif
+  if ((iturb.eq.24.or.iturb.eq.25).and.iterns.eq.1) then
     call field_get_val_v(ivarfl(irij), cvara_rij)
   endif
 endif
@@ -1000,14 +1003,14 @@ endif
 ! ---> - Divergence of tensor Rij
 ! ---> - Non linear part of Rij for non-liear Eddy Viscosity Models
 
-if((itytur.eq.3.or.iturb.eq.23).and.iterns.eq.1) then
+if((itytur.eq.3.or.iturb.eq.23.or.iturb.eq.24.or.iturb.eq.25).and.iterns.eq.1) then
 
   allocate(rij(6,ncelet))
   allocate(coefat(6,nfabor))
   allocate(coefbt(6,6,nfabor))
 
   ! Reynolds Stress Models
-  if (itytur.eq.3) then
+  if (itytur.eq.3.or.iturb.eq.24.or.iturb.eq.25) then
 
     do iel = 1, ncelet
       rij(1,iel) = cvara_rij(1,iel)
@@ -1108,7 +1111,7 @@ if((itytur.eq.3.or.iturb.eq.23).and.iterns.eq.1) then
   deallocate(tflmas, tflmab)
 
   ! (if iphydr=1 then this term is already taken into account)
-  if (iphydr.ne.1.or.igprij.ne.1) then
+  if (iphydr.ne.1.or.(igprij.ne.1.and.itytur.ne.2)) then
 
     ! If extrapolation of source terms
     if (isno2t.gt.0) then
@@ -1377,7 +1380,7 @@ if (iappel.eq.1.and.iphydr.eq.1) then
   endif
 
   ! Add -div( rho R) as external force
-  if (itytur.eq.3.and.igprij.eq.1) then
+  if (itytur.eq.3.and.igprij.eq.1.or.iturb.eq.24.or.iturb.eq.25) then
     do iel = 1, ncel
       dvol = 0.d0
       ! If it is not a solid cell

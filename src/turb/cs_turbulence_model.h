@@ -57,6 +57,9 @@ typedef enum {
   CS_TURB_K_EPSILON_LIN_PROD = 21,
   CS_TURB_K_EPSILON_LS = 22,
   CS_TURB_K_EPSILON_QUAD = 23,
+  CS_TURB_K_EPSILON_CUBIC_HR = 24,
+  CS_TURB_K_EPSILON_CUBIC_LR = 25,
+  CS_TURB_K_EPSILON_LR = 26,
   CS_TURB_RIJ_EPSILON_LRR = 30,
   CS_TURB_RIJ_EPSILON_SSG = 31,
   CS_TURB_RIJ_EPSILON_EBRSM = 32,
@@ -105,7 +108,8 @@ enum {
   CS_HYBRID_DES   = 1,
   CS_HYBRID_DDES  = 2,
   CS_HYBRID_SAS   = 3,
-  CS_HYBRID_HTLES = 4
+  CS_HYBRID_HTLES = 4,
+  CS_HYBRID_STRUCT = 5
 
 };
 
@@ -124,6 +128,7 @@ typedef struct {
                             k-epsilon model
                           CS_TURB_K_EPSILON_QUAD: Baglietto et al. low Re
                             k epsilon model
+                          CS_TURB_K_EPSILON_CUBIC: Baglietto
                           CS_TURB_RIJ_EPSILON_LRR: Rij-epsilon (LRR)
                           CS_TURB_RIJ_EPSILON_SSG: Rij-epsilon (SSG)
                           CS_TURB_RIJ_EPSILON_EBRSM: Rij-epsilon (EBRSM)
@@ -139,13 +144,14 @@ typedef struct {
   int           itytur;       /* class of turbulence model (integer value
                                  iturb/10) */
   int           hybrid_turb;  /* Type of Hybrid Turbulence Model
-                                   - CS_HYBRID_NONE:  No model
-                                   - CS_HYBRID_DES:   Detached Eddy Simulation
-                                   - CS_HYBRID_DDES:  Delayed Detached Eddy
-                                                      Simulation
-                                   - CS_HYBRID_SAM:   Scale Adaptive Model
-                                   - CS_HYBRID_HTLES: Hybrid Temporal Large
-                                                      Eddy Simulation */
+                                   - CS_HYBRID_NONE:   No model
+                                   - CS_HYBRID_DES:    Detached Eddy Simulation
+                                   - CS_HYBRID_DDES:   Delayed Detached Eddy
+                                                       Simulation
+                                   - CS_HYBRID_SAM:    Scale Adaptive Model
+                                   - CS_HYBRID_HTLES:  Hybrid Temporal Large
+                                                       Eddy Simulation
+                                   - CS_HYBRID_STRUCT: STRUCT-Epsilon */
   int           type;  /* Type of turbulence modelling:
                           - CS_TURB_NONE: No model
                           - CS_TURB_RANS: RANS modelling
@@ -363,11 +369,20 @@ extern double cs_turb_cddes;
 extern double cs_turb_csas;
 extern double cs_turb_csas_eta2;
 extern double cs_turb_chtles_bt0;
+extern double cs_turb_ca0;
+extern double cs_turb_ca1;
+extern double cs_turb_ca2;
+extern double cs_turb_ca3;
 extern double cs_turb_cnl1;
 extern double cs_turb_cnl2;
 extern double cs_turb_cnl3;
+extern double cs_turb_cnl4;
+extern double cs_turb_cnl5;
 extern double cs_turb_cnl6;
 extern double cs_turb_cnl7;
+extern double cs_turb_cnl8;
+extern double cs_turb_cnl9;
+extern double cs_turb_ceps3;
 extern double cs_turb_csab1;
 extern double cs_turb_csab2;
 extern double cs_turb_csasig;

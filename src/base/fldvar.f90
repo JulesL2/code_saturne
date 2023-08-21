@@ -242,6 +242,21 @@ endif
 if (itytur.eq.2) then
   call add_variable_field('k', 'Turb Kinetic Energy', 1, ik)
   call add_variable_field('epsilon', 'Turb Dissipation', 1, iep)
+  if (iturb.eq.24.or.iturb.eq.25) then
+    ! Add Rij to store the non linear stresses with their
+    ! boundary condition array for div(Rij)
+    call add_variable_field('rij', 'Rij', 6, irij)
+    call field_set_key_int(ivarfl(irij), keycpl, 1)
+    call cs_f_field_set_n_previous(ivarfl(irij), 2)
+  
+    ! All rij components point to same field
+    ir11 = irij
+    ir22 = ir11 + 1
+    ir33 = ir22 + 1
+    ir12 = ir33 + 1
+    ir23 = ir12 + 1
+    ir13 = ir23 + 1
+  endif
 else if (itytur.eq.3) then
   call add_variable_field('rij', 'Rij', 6, irij)
   call field_set_key_int(ivarfl(irij), keycpl, 1)

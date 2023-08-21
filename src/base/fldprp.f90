@@ -217,6 +217,15 @@ if (hybrid_turb.eq.4) then
 
 endif
 
+if (hybrid_turb.eq.5) then
+  call add_property_field_1d('hybrid_struct_source_term', 'STRUCT source term', iflid)
+endif
+
+if  (iturb.eq.24.or.iturb.eq.25) then
+  ! Variable Cmu in Baglietto cubic model
+  call add_property_field_1d('cmu', 'C_mu', iflid)
+endif
+
 if  (iturb.eq.60) then
   ! Square of the norm of the deviatoric part of the deformation rate
   ! tensor (\f$S^2=2S_{ij}^D S_{ij}^D\f$).

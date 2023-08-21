@@ -107,6 +107,37 @@ void
 cs_turbulence_ke_q(cs_real_6_t  rij[]);
 
 /*----------------------------------------------------------------------------*/
+/*!
+ * \brief Calculation of non linear terms of the cubic k-epsilon model
+ *        (Baglietto et al.) Update the Rij fields
+ *
+ */
+/*----------------------------------------------------------------------------*/
+void
+cs_turbulence_ke_c_rij(void);
+
+/*----------------------------------------------------------------------------*/
+/*!
+ * \brief Calculation of turbulent viscosity for
+ *        the high Reynolds non-linear cubic K-epsilon from
+ *        Baglietto et al. (2005)
+ */
+/*----------------------------------------------------------------------------*/
+
+void
+cs_turbulence_ke_c_hr_mu_t(void);
+
+/*----------------------------------------------------------------------------*/
+/*!
+ * \brief Calculation of turbulent viscosity for
+ *        the low Reynolds non-linear cubic K-epsilon from
+ *        Baglietto et al. (2005)
+ */
+/*----------------------------------------------------------------------------*/
+
+void
+cs_turbulence_ke_c_lr_mu_t(void);
+/*----------------------------------------------------------------------------*/
 
 END_C_DECLS
 

@@ -367,6 +367,10 @@ module optcal
   !>    - 10: mixing length model
   !>    - 20: standard \f$ k-\varepsilon \f$ model
   !>    - 21: \f$ k-\varepsilon \f$ model with Linear Production (LP) correction
+  !>    - 22: \f$ k-\varepsilon \f$ low Reynolds model from Launder & Sharma
+  !>    - 23: \f$ k-\varepsilon \f$ quadratic model from Baglietto & al
+  !>    - 24: \f$ k-\varepsilon \f$ cubic model from Baglietto & al high Reynolds
+  !>    - 25: \f$ k-\varepsilon \f$ cubic model from Baglietto & al low Reynolds
   !>    - 30: \f$ R_{ij}-\epsilon \f$ (LRR)
   !>    - 31: \f$ R_{ij}-\epsilon \f$ (SSG)
   !>    - 32: \f$ R_{ij}-\epsilon \f$ (EBRSM)
