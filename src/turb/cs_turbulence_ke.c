@@ -830,8 +830,13 @@ cs_turbulence_ke(cs_lnum_t        ncesmp,
                                                  /viscl[c_id]/xeps)))
               * (xpk + 2.*viscl[c_id]*xk/cs_math_pow2(xdist))
               * exp(-3.75e-3*cs_math_pow2(xrey));
+          if (xpk < 0) {
+            ce1rc[c_id] = (1. + xpkp/fmin(xpk, -1.e-10))*cs_turb_ce1;
+          }
+          else {
+            ce1rc[c_id] = (1. + xpkp/fmax(xpk,  1.e-10))*cs_turb_ce1;
+          }
 
-          ce1rc[c_id] = (1. + xpkp/fmax(xpk, 1.e-10))*cs_turb_ce1;
         }
       }
 
