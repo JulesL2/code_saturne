@@ -687,8 +687,8 @@ cs_turbulence_ke(cs_lnum_t        ncesmp,
       cs_real_t xstrai[3][3], xrotac[3][3];
 
       cs_real_t visct = cpro_pcvto[c_id];
-      cs_real_t xeps  = cvar_ep[c_id];
-      cs_real_t xk    = cvar_k[c_id];
+      cs_real_t xeps  = cvara_ep[c_id];
+      cs_real_t xk    = cvara_k[c_id];
       cs_real_t xttke = xk/xeps;
 
       /* Sij */
@@ -816,8 +816,8 @@ cs_turbulence_ke(cs_lnum_t        ncesmp,
 #       pragma omp parallel for if(n_cells_ext > CS_THR_MIN)
         for (cs_lnum_t c_id = 0; c_id < n_cells; c_id++) {
           cs_real_t rho  = crom[c_id];
-          cs_real_t xeps = cvar_ep[c_id];
-          cs_real_t xk   = cvar_k[c_id];
+          cs_real_t xeps = cvara_ep[c_id];
+          cs_real_t xk   = cvara_k[c_id];
           ce2rc[c_id] = (1. - 0.3*exp(-cs_math_pow2( rho*cs_math_pow2(xk)
                                                     /viscl[c_id]
                                                     /xeps)))*cs_turb_ce2;
@@ -2392,8 +2392,8 @@ cs_turbulence_ke_q(cs_real_6_t  rij[])
   const cs_lnum_t n_cells_ext = cs_glob_mesh->n_cells_with_ghosts;
 
   const cs_real_t *visct =  CS_F_(mu_t)->val;
-  const cs_real_t *cvar_k = CS_F_(k)->val;
-  const cs_real_t *cvar_ep = CS_F_(eps)->val;
+  const cs_real_t *cvara_k = CS_F_(k)->val_pre;
+  const cs_real_t *cvara_ep = CS_F_(eps)->val_pre;
   const cs_real_t *crom = CS_F_(rho)->val;
 
   /* Initialization
@@ -2420,8 +2420,8 @@ cs_turbulence_ke_q(cs_real_6_t  rij[])
     cs_real_t wikskj[3][3], skiwjk[3][3], wikwjk[3][3];
 
     const cs_real_t xvisct = visct[c_id];
-    const cs_real_t xeps   = cvar_ep[c_id];
-    const cs_real_t xk     = cvar_k[c_id];
+    const cs_real_t xeps   = cvara_ep[c_id];
+    const cs_real_t xk     = cvara_k[c_id];
     const cs_real_t xttke  = xk/xeps;
     const cs_real_t xrom   = crom[c_id];
 
