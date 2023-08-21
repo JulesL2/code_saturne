@@ -637,7 +637,7 @@ cs_turbulence_ke(cs_lnum_t        ncesmp,
   if (cs_glob_turb_model->iturb == CS_TURB_K_EPSILON_LS) {
     for (cs_lnum_t c_id = 0; c_id < n_cells; c_id++) {
       sqrt_strain[c_id] = pow(fabs(strain[c_id]), 0.5);
-      sqrt_k[c_id]      = pow(fabs(cvar_k[c_id]), 0.5);
+      sqrt_k[c_id]      = pow(fabs(cvara_k[c_id]), 0.5);
     }
   }
 
@@ -802,8 +802,8 @@ cs_turbulence_ke(cs_lnum_t        ncesmp,
 #       pragma omp parallel for if(n_cells_ext > CS_THR_MIN)
         for (cs_lnum_t c_id = 0; c_id < n_cells; c_id++) {
           cs_real_t rho  = crom[c_id];
-          cs_real_t xeps = cvar_ep[c_id];
-          cs_real_t xk   = cvar_k[c_id];
+          cs_real_t xeps = cvara_ep[c_id];
+          cs_real_t xk   = cvara_k[c_id];
           ce2rc[c_id] = (1. - 0.3*exp(-cs_math_pow2( rho*cs_math_pow2(xk)
                                                     /viscl[c_id]
                                                     /xeps)))*cs_turb_ce2;
