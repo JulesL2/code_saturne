@@ -2080,6 +2080,8 @@ cs_turbulence_ke_clip(cs_lnum_t  n_cells,
   cs_real_t *crom    = (cs_real_t *)CS_F_(rho)->val;
   cs_real_t *cvar_k  = (cs_real_t *)CS_F_(k)->val;
   cs_real_t *cvar_ep = (cs_real_t *)CS_F_(eps)->val;
+  cs_real_t *cvara_k  = (cs_real_t *)CS_F_(k)->val_pre;
+  cs_real_t *cvara_ep = (cs_real_t *)CS_F_(eps)->val_pre;
   cs_real_t *viscl   =  (cs_real_t *)CS_F_(mu)->val;
 
   const cs_equation_param_t *eqp
@@ -2241,7 +2243,7 @@ cs_turbulence_ke_clip(cs_lnum_t  n_cells,
         iclpk2 = iclpk2 + 1;
         if (clip_k_id >= 0)
           cpro_k_clipped[c_id] = -xk;
-        cvar_k[c_id] = -xk;
+        cvar_k[c_id] = cvara_k[c_id]/100;
       }
       if (fabs(xe) <= epz2) {
         iclpe2 = iclpe2 + 1;
@@ -2253,7 +2255,7 @@ cs_turbulence_ke_clip(cs_lnum_t  n_cells,
         iclpe2 = iclpe2 + 1;
         if (clip_e_id >= 0)
           cpro_e_clipped[c_id] = - xe;
-        cvar_ep[c_id] = - xe;
+        cvar_ep[c_id] = cvara_ep[c_id]/100;
       }
     }
 
